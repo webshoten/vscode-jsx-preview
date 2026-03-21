@@ -1,0 +1,36 @@
+{
+  "name": "jsx-preview",
+  "displayName": "JSX Preview",
+  "description": "Preview JSX elements by hovering and clicking",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onLanguage:typescriptreact",
+    "onLanguage:javascriptreact"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "jsxPreview.show",
+        "title": "JSX Preview: Show Preview"
+      }
+    ]
+  },
+  "scripts": {
+    "build": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node --sourcemap",
+    "watch": "npm run build -- --watch"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "@types/react": "^19.2.14",
+    "@types/vscode": "^1.110.0",
+    "esbuild": "^0.27.4",
+    "typescript": "^5.9.3"
+  }
+}

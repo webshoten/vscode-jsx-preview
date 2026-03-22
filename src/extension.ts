@@ -1,9 +1,9 @@
 import * as vscode from "vscode";
-import { createHoverProvider } from "./hoverProvider";
-import { extractJsxBlock } from "./extractJsxBlock";
-import { bundleJsx } from "./bundleJsx";
 import { buildPreviewHtml } from "./buildPreviewHtml";
+import { bundleJsx } from "./bundleJsx";
+import { extractJsxBlock } from "./extractJsxBlock";
 import { generateTailwindCss } from "./generateTailwindCss";
+import { createHoverProvider } from "./hoverProvider";
 
 export const COMMAND_NAME = "jsxPreview.show";
 
@@ -30,21 +30,31 @@ export function activate(context: vscode.ExtensionContext) {
       const bundle = await bundleJsx(jsxBlock, document.uri.fsPath);
       const tailwindCss = generateTailwindCss(jsxBlock, document.uri.fsPath);
 
-      if (bundle && bundle.error) {
+      if (bundle?.error) {
         // バンドルエラー: エラーメッセージを表示しつつ前回の結果を維持
-        panel.webview.html = buildPreviewHtml(lastValidJs, bundle.error, lastValidCss);
+        panel.webview.html = buildPreviewHtml(
+          lastValidJs,
+          bundle.error,
+          lastValidCss,
+        );
       } else if (bundle) {
-        console.log("[JSX Preview] bundle.css:", bundle.css ? `${bundle.css.length}文字` : "null");
-        console.log("[JSX Preview] tailwindCss:", tailwindCss ? `${tailwindCss.length}文字` : "null");
         lastValidJs = bundle.js;
         const allCss = [tailwindCss, bundle.css].filter(Boolean).join("\n");
         lastValidCss = allCss || null;
         panel.webview.html = buildPreviewHtml(bundle.js, null, lastValidCss);
       } else {
-        panel.webview.html = buildPreviewHtml(lastValidJs, "JSXブロックを解析できませんでした", lastValidCss);
+        panel.webview.html = buildPreviewHtml(
+          lastValidJs,
+          "JSXブロックを解析できませんでした",
+          lastValidCss,
+        );
       }
     } else {
-      panel.webview.html = buildPreviewHtml(lastValidJs, "JSXブロックが見つかりません", lastValidCss);
+      panel.webview.html = buildPreviewHtml(
+        lastValidJs,
+        "JSXブロックが見つかりません",
+        lastValidCss,
+      );
     }
   }
 
@@ -64,7 +74,7 @@ export function activate(context: vscode.ExtensionContext) {
           "jsxPreview",
           "JSX Preview",
           vscode.ViewColumn.Beside,
-          { enableScripts: true }
+          { enableScripts: true },
         );
         panel.onDidDispose(() => {
           panel = undefined;
@@ -74,7 +84,7 @@ export function activate(context: vscode.ExtensionContext) {
       }
 
       updatePreview(editor.document, args.line);
-    }
+    },
   );
 
   // ファイル保存時に自動更新

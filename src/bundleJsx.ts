@@ -1,11 +1,12 @@
-import * as path from "path";
-import * as fs from "fs";
 import * as esbuild from "esbuild";
+import * as fs from "fs";
+import * as path from "path";
+import { extractImports, findNodeModulesPaths } from "./resolveImports";
 
 export interface BundleResult {
   js: string;
   css: string | null; // CSSのimportがあれば含まれる
-  error?: string;     // バンドルエラーのメッセージ
+  error?: string; // バンドルエラーのメッセージ
 }
 
 // JSXブロックをesbuildでバンドルする
@@ -13,7 +14,10 @@ export interface BundleResult {
 // 1. JSXブロックをReactでレンダリングするコードに包む
 // 2. esbuildでバンドル（importの解決、JSX変換、CSS抽出）
 // 3. バンドルされたJSとCSSを返す
-export async function bundleJsx(jsxBlock: string, filePath: string): Promise<BundleResult | null> {
+export async function bundleJsx(
+  jsxBlock: string,
+  filePath: string,
+): Promise<BundleResult | null> {
   const fileDir = path.dirname(filePath);
 
   const tmpDir = path.join(fileDir, "node_modules", ".jsx-preview");
@@ -44,17 +48,16 @@ export async function bundleJsx(jsxBlock: string, filePath: string): Promise<Bun
     root.render(<Preview />);
   `;
 
-  console.log("[JSX Preview] エントリーコード:\n", entryCode);
   fs.writeFileSync(tmpEntry, entryCode);
 
   try {
     const result = await esbuild.build({
       entryPoints: [tmpEntry],
       bundle: true,
-      write: false,        // ファイルに書かず文字列で返す
-      outdir: tmpDir,      // CSSの分離出力に必要（実際には書き込まない）
-      format: "iife",      // ブラウザで即実行できる形式
-      jsx: "automatic",    // React 17+ の新しいJSX変換
+      write: false, // ファイルに書かず文字列で返す
+      outdir: tmpDir, // CSSの分離出力に必要（実際には書き込まない）
+      format: "iife", // ブラウザで即実行できる形式
+      jsx: "automatic", // React 17+ の新しいJSX変換
       // 編集中ファイルのディレクトリからimportを解決する
       resolveExtensions: [".tsx", ".ts", ".jsx", ".js"],
       nodePaths: [
@@ -84,66 +87,10 @@ export async function bundleJsx(jsxBlock: string, filePath: string): Promise<Bun
     }
 
     // esbuildのエラーから最初のメッセージを取得
-    const errorText = e?.errors?.[0]?.text || e?.message || "バンドルに失敗しました";
+    const errorText = e?.errors?.[0]?.text || e?.message ||
+      "バンドルに失敗しました";
     return { js: "", css: null, error: errorText };
   }
 
   return null;
-}
-
-// 元ファイルからimport文を抽出する（React/ReactDOMは除く、エントリーコードで別途追加するため）
-// 相対パスのimportは元ファイルのディレクトリからの絶対パスに変換する
-//
-// 例: /project/src/App.tsx に import "./style.css" がある場合
-//   → import "/project/src/style.css" に変換
-//   一時ファイルは別の場所にあるため、相対パスだと解決できないため
-function extractImports(code: string, fileDir: string): string {
-  return code
-    .split("\n")
-    .filter((line) => {
-      const trimmed = line.trim();
-      if (!trimmed.startsWith("import ")) {
-        return false;
-      }
-      if (trimmed.includes("from \"react\"") || trimmed.includes("from 'react'")) {
-        return false;
-      }
-      if (trimmed.includes("from \"react-dom") || trimmed.includes("from 'react-dom")) {
-        return false;
-      }
-      return true;
-    })
-    .map((line) => {
-      // 相対パス（"./" や "../"）を絶対パスに変換
-      return line.replace(/from\s+["'](\.[^"']+)["']/, (_match, relPath) => {
-        const absPath = path.resolve(fileDir, relPath);
-        return `from "${absPath}"`;
-      }).replace(/import\s+["'](\.[^"']+)["']/, (_match, relPath) => {
-        // import "./style.css" のようなside-effect importの場合
-        const absPath = path.resolve(fileDir, relPath);
-        return `import "${absPath}"`;
-      });
-    })
-    .join("\n");
-}
-
-// 親ディレクトリを辿ってnode_modulesのパスを集める（モノレポ対応）
-function findNodeModulesPaths(startDir: string): string[] {
-  const paths: string[] = [];
-  let dir = startDir;
-
-  while (true) {
-    const parent = path.dirname(dir);
-    if (parent === dir) {
-      break;
-    }
-    dir = parent;
-
-    const nodeModules = path.join(dir, "node_modules");
-    if (fs.existsSync(nodeModules)) {
-      paths.push(nodeModules);
-    }
-  }
-
-  return paths;
 }

@@ -43,6 +43,11 @@ function findTailwindConfig(filePath: string): string | null {
 // 3. npx tailwindcss で一時ファイルを対象にCSS生成
 // 4. 生成されたCSSを返す
 export function generateTailwindCss(jsxBlock: string, filePath: string): string | null {
+  // JSXブロックにclassNameがなければTailwindは不要
+  if (!jsxBlock.includes("className")) {
+    return null;
+  }
+
   const configPath = findTailwindConfig(filePath);
   if (!configPath) {
     return null;

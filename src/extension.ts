@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { createHoverProvider } from "./hoverProvider";
 import { extractJsxBlock } from "./extractJsxBlock";
+import { bundleJsx } from "./bundleJsx";
 import { buildPreviewHtml } from "./buildPreviewHtml";
 import { generateTailwindCss } from "./generateTailwindCss";
 
@@ -10,34 +11,47 @@ export function activate(context: vscode.ExtensionContext) {
   const hoverProvider = createHoverProvider();
 
   let panel: vscode.WebviewPanel | undefined;
-
-  // 現在プレビュー中の行番号を保持（テキスト変更時に再描画するため）
   let currentLine: number | undefined;
 
-  // 前回成功した状態を保持（エラー時に表示を維持するため）
-  let lastValidBlock: string | null = null;
+  // 前回成功した結果を保持
+  let lastValidJs: string | null = null;
   let lastValidCss: string | null = null;
 
   // プレビューを更新する共通関数
-  function updatePreview(document: vscode.TextDocument, line: number) {
+  async function updatePreview(document: vscode.TextDocument, line: number) {
     if (!panel) {
       return;
     }
 
+    // JSXブロックを抽出する
     const jsxBlock = extractJsxBlock(document, line);
 
     if (jsxBlock) {
-      // 解析成功 → Tailwind CSSを生成して更新
-      lastValidBlock = jsxBlock;
-      lastValidCss = generateTailwindCss(jsxBlock, document.uri.fsPath);
-      panel.webview.html = buildPreviewHtml(jsxBlock, false, lastValidCss);
+      const bundle = await bundleJsx(jsxBlock, document.uri.fsPath);
+      const tailwindCss = generateTailwindCss(jsxBlock, document.uri.fsPath);
+
+      if (bundle) {
+        console.log("[JSX Preview] bundle.css:", bundle.css ? `${bundle.css.length}文字` : "null");
+        console.log("[JSX Preview] tailwindCss:", tailwindCss ? `${tailwindCss.length}文字` : "null");
+        lastValidJs = bundle.js;
+        // 実際のプロジェクトと同じ読み込み順を再現する:
+        //   1. Tailwind CSS（globals.cssに相当。@tailwind base のリセット含む）
+        //   2. コンポーネントのCSS（import "./style.css" 等）
+        // CSSは後に読み込まれたものが同じ詳細度なら優先されるため、
+        // コンポーネント固有のスタイルがTailwindのリセットを上書きできる
+        const allCss = [tailwindCss, bundle.css].filter(Boolean).join("\n");
+        lastValidCss = allCss || null;
+        console.log("[JSX Preview] allCss:", lastValidCss ? `${lastValidCss.length}文字` : "null");
+        panel.webview.html = buildPreviewHtml(bundle.js, false, lastValidCss);
+      } else {
+        panel.webview.html = buildPreviewHtml(lastValidJs, true, lastValidCss);
+      }
     } else {
-      // 解析失敗 → 前回の表示を維持 + エラー表示
-      panel.webview.html = buildPreviewHtml(lastValidBlock, true, lastValidCss);
+      panel.webview.html = buildPreviewHtml(lastValidJs, true, lastValidCss);
     }
   }
 
-  // [Preview] クリック時のコマンド
+  // [JSX Preview] クリック時のコマンド
   const command = vscode.commands.registerCommand(
     COMMAND_NAME,
     (args: { file: string; line: number }) => {
@@ -58,7 +72,7 @@ export function activate(context: vscode.ExtensionContext) {
         panel.onDidDispose(() => {
           panel = undefined;
           currentLine = undefined;
-          lastValidBlock = null;
+          lastValidJs = null;
         });
       }
 

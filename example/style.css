@@ -1,0 +1,31 @@
+.card {
+  background: #ffffff;
+  border: 2px solid #333;
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 400px;
+  font-family: sans-serif;
+}
+
+.card-title {
+  font-size: 24px;
+  font-weight: bold;
+  color: #1a1a1a;
+  margin-bottom: 8px;
+}
+
+.card-text {
+  font-size: 16px;
+  color: #666;
+  line-height: 1.5;
+}
+
+.badge {
+  display: inline-block;
+  background: #e0f2fe;
+  color: #0369a1;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 14px;
+  margin-top: 12px;
+}

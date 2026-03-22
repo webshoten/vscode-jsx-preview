@@ -4,6 +4,7 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        // カスタムカラー（標準にはない色）
         brand: "#ff6600",
         subtle: "#f0e6ff",
       },

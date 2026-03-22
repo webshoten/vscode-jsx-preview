@@ -1,24 +1,25 @@
-import { jsxToHtml } from "./jsxToHtml";
-
 // プレビューパネルに表示するHTMLを組み立てる
-// cssが渡された場合はそれを使い、なければスタイルなしで表示
-export function buildPreviewHtml(jsxBlock: string | null, error: boolean, css: string | null): string {
+// bundledJs: esbuildでバンドルされたJavaScript（React、アイコン等）
+// css: Tailwind CLIで生成されたCSS（カスタム設定対応）
+export function buildPreviewHtml(bundledJs: string | null, error: boolean, css: string | null): string {
   const errorBanner = error
     ? `<div style="background: #fef2f2; color: #dc2626; padding: 8px 12px; border-bottom: 1px solid #fca5a5; font-size: 14px;">解析エラー: JSXの構文が不完全です</div>`
     : "";
 
-  const content = jsxBlock ? jsxToHtml(jsxBlock) : "";
   const styleTag = css ? `<style>${css}</style>` : "";
+  const script = bundledJs ? `<script>${bundledJs}</script>` : "";
 
   return `
     <!DOCTYPE html>
     <html>
       <head>
         ${styleTag}
+        <style>body { margin: 0; padding: 16px; }</style>
       </head>
       <body>
         ${errorBanner}
-        ${content}
+        <div id="root"></div>
+        ${script}
       </body>
     </html>
   `;

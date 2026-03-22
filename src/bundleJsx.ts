@@ -5,6 +5,7 @@ import * as esbuild from "esbuild";
 export interface BundleResult {
   js: string;
   css: string | null; // CSSのimportがあれば含まれる
+  error?: string;     // バンドルエラーのメッセージ
 }
 
 // JSXブロックをesbuildでバンドルする
@@ -81,6 +82,10 @@ export async function bundleJsx(jsxBlock: string, filePath: string): Promise<Bun
     if (e?.errors) {
       console.error("[JSX Preview] 詳細:", JSON.stringify(e.errors, null, 2));
     }
+
+    // esbuildのエラーから最初のメッセージを取得
+    const errorText = e?.errors?.[0]?.text || e?.message || "バンドルに失敗しました";
+    return { js: "", css: null, error: errorText };
   }
 
   return null;

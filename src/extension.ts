@@ -30,24 +30,21 @@ export function activate(context: vscode.ExtensionContext) {
       const bundle = await bundleJsx(jsxBlock, document.uri.fsPath);
       const tailwindCss = generateTailwindCss(jsxBlock, document.uri.fsPath);
 
-      if (bundle) {
+      if (bundle && bundle.error) {
+        // バンドルエラー: エラーメッセージを表示しつつ前回の結果を維持
+        panel.webview.html = buildPreviewHtml(lastValidJs, bundle.error, lastValidCss);
+      } else if (bundle) {
         console.log("[JSX Preview] bundle.css:", bundle.css ? `${bundle.css.length}文字` : "null");
         console.log("[JSX Preview] tailwindCss:", tailwindCss ? `${tailwindCss.length}文字` : "null");
         lastValidJs = bundle.js;
-        // 実際のプロジェクトと同じ読み込み順を再現する:
-        //   1. Tailwind CSS（globals.cssに相当。@tailwind base のリセット含む）
-        //   2. コンポーネントのCSS（import "./style.css" 等）
-        // CSSは後に読み込まれたものが同じ詳細度なら優先されるため、
-        // コンポーネント固有のスタイルがTailwindのリセットを上書きできる
         const allCss = [tailwindCss, bundle.css].filter(Boolean).join("\n");
         lastValidCss = allCss || null;
-        console.log("[JSX Preview] allCss:", lastValidCss ? `${lastValidCss.length}文字` : "null");
-        panel.webview.html = buildPreviewHtml(bundle.js, false, lastValidCss);
+        panel.webview.html = buildPreviewHtml(bundle.js, null, lastValidCss);
       } else {
-        panel.webview.html = buildPreviewHtml(lastValidJs, true, lastValidCss);
+        panel.webview.html = buildPreviewHtml(lastValidJs, "JSXブロックを解析できませんでした", lastValidCss);
       }
     } else {
-      panel.webview.html = buildPreviewHtml(lastValidJs, true, lastValidCss);
+      panel.webview.html = buildPreviewHtml(lastValidJs, "JSXブロックが見つかりません", lastValidCss);
     }
   }
 

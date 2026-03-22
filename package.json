@@ -2,8 +2,14 @@
   "name": "jsx-preview",
   "displayName": "JSX Preview",
   "description": "Preview JSX elements by hovering and clicking",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/webshoten/vscode-jsx-preview.git"
+  },
+  "license": "MIT",
+  "icon": "icon/icon.png",
   "publisher": "vscode-jsx-preview",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "engines": {
     "vscode": "^1.110.0"
   },

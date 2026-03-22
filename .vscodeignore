@@ -2,7 +2,10 @@ src/
 docs/
 example/
 .vscode/
-node_modules/
+node_modules/.package-lock.json
+node_modules/@biomejs/
+node_modules/@types/
+node_modules/typescript/
 biome.json
 tsconfig.json
 *.vsix

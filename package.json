@@ -2,9 +2,10 @@
   "name": "jsx-preview",
   "displayName": "JSX Preview",
   "description": "Preview JSX elements by hovering and clicking",
+  "publisher": "vscode-jsx-preview",
   "version": "0.0.1",
   "engines": {
-    "vscode": "^1.85.0"
+    "vscode": "^1.110.0"
   },
   "categories": [
     "Other"

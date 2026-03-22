@@ -1,0 +1,9 @@
+src/
+docs/
+example/
+.vscode/
+node_modules/
+biome.json
+tsconfig.json
+*.vsix
+tmp.html

@@ -30,11 +30,11 @@
     ]
   },
   "scripts": {
-    "build": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --external:esbuild --format=cjs --platform=node --sourcemap",
+    "build": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --external:esbuild-wasm --format=cjs --platform=node --sourcemap",
     "watch": "npm run build -- --watch"
   },
   "dependencies": {
-    "esbuild": "^0.27.4"
+    "esbuild-wasm": "^0.27.4"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.8",

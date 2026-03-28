@@ -20,6 +20,44 @@ The preview auto-updates every time you save the file.
 - **npm packages** — Libraries like `react-icons` work out of the box
 - **Mixed styling** — Tailwind classes and CSS imports can be used together
 
+## Component Preview with `@preview`
+
+When previewing a component definition file (e.g., `Button.tsx`), you can use the `@preview` directive to specify how it should be rendered.
+
+### With `@preview` — specify your own props
+
+Single line:
+```tsx
+// @preview <Button variant="danger">Delete</Button>
+export const Button = ({ children, variant = "primary" }: ButtonProps) => {
+```
+
+Multi-line:
+```tsx
+/* @preview
+<Card title="User Settings">
+  <p>Update your account info</p>
+</Card>
+*/
+export const Card = ({ title, children }: CardProps) => {
+```
+
+You only need to specify the props you care about — props with default values in the code are used as-is.
+
+### Without `@preview` — auto-generated defaults
+
+If no `@preview` is specified, default values are generated from TypeScript types:
+
+| Type | Default |
+|------|---------|
+| `string` | `"Text"` |
+| `number` | `0` |
+| `boolean` | `true` |
+| `React.ReactNode` | `<span>Content</span>` |
+| `"primary" \| "danger"` | `"primary"` (first value) |
+
+Props with default values in destructuring (e.g., `variant = "primary"`) are skipped.
+
 ## Requirements
 
 - `react` and `react-dom` installed in your project

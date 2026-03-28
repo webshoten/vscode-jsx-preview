@@ -14,7 +14,7 @@ export function buildPreviewHtml(bundledJs: string | null, errorMessage: string 
     <html>
       <head>
         ${styleTag}
-        <style>body { margin: 0; padding: 16px; }</style>
+        <style>body { margin: 0; padding: 16px; background: #ffffff; color: #000000; }</style>
       </head>
       <body>
         ${errorBanner}

@@ -43,8 +43,9 @@ function findTailwindConfig(filePath: string): string | null {
 // 3. npx tailwindcss で一時ファイルを対象にCSS生成
 // 4. 生成されたCSSを返す
 export function generateTailwindCss(jsxBlock: string, filePath: string): string | null {
-  // JSXブロックにclassNameがなければTailwindは不要
-  if (!jsxBlock.includes("className")) {
+  // JSXブロックまたは元ファイルにclassNameがなければTailwindは不要
+  const originalCode = fs.readFileSync(filePath, "utf-8");
+  if (!jsxBlock.includes("className") && !originalCode.includes("className")) {
     return null;
   }
 
@@ -69,20 +70,16 @@ export function generateTailwindCss(jsxBlock: string, filePath: string): string 
   fs.writeFileSync(tmpInput, jsxBlock);
   fs.writeFileSync(tmpCss, "@tailwind base;\n@tailwind components;\n@tailwind utilities;\n");
 
+  // JSXブロックだけでなく、元ファイル自身とimportされたソースファイルも
+  // Tailwindのスキャン対象にする（コンポーネント内のclassNameを検出するため）
+  const importedFiles = resolveImportedFiles(filePath);
+  const contentPaths = [tmpInput, filePath, ...importedFiles]
+    .map((p) => `"${p}"`)
+    .join(",");
+
   try {
-    // npx tailwindcss でCSS生成を実行:
-    //   -i "${tmpCss}"       : 入力CSS（@tailwind ディレクティブが書かれたファイル）
-    //   -o "${tmpOutput}"    : 生成されたCSSの出力先
-    //   --content "${tmpInput}" : このファイル内のクラス名を検出対象にする
-    //   -c "${configPath}"   : プロジェクトのtailwind.configを使う
-    //   --minify             : 出力CSSを圧縮する
-    //
-    // execSyncのオプション:
-    //   cwd: projectDir      : コマンドをプロジェクトのディレクトリで実行
-    //   timeout: 10000       : 10秒でタイムアウト
-    //   stdio: "pipe"        : コマンドの出力をキャプチャ（コンソールに出さない）
     execSync(
-      `npx tailwindcss -i "${tmpCss}" -o "${tmpOutput}" --content "${tmpInput}" -c "${configPath}" --minify`,
+      `npx tailwindcss -i "${tmpCss}" -o "${tmpOutput}" --content ${contentPaths} -c "${configPath}" --minify`,
       {
         cwd: projectDir,
         timeout: 10000,
@@ -98,4 +95,29 @@ export function generateTailwindCss(jsxBlock: string, filePath: string): string 
   }
 
   return null;
+}
+
+// 元ファイルのimport文から相対パスのローカルファイルを解決する
+// （node_modulesのパッケージは除外）
+function resolveImportedFiles(filePath: string): string[] {
+  const fileDir = path.dirname(filePath);
+  const code = fs.readFileSync(filePath, "utf-8");
+  const files: string[] = [];
+
+  const importRegex = /import\s+.*?from\s+["'](\.[^"']+)["']/g;
+  let match: RegExpExecArray | null;
+
+  while ((match = importRegex.exec(code)) !== null) {
+    const relPath = match[1];
+    const absPath = path.resolve(fileDir, relPath);
+
+    // 拡張子がない場合は .tsx, .ts, .jsx, .js を試す
+    const candidates = fs.existsSync(absPath)
+      ? [absPath]
+      : [".tsx", ".ts", ".jsx", ".js"].map((ext) => absPath + ext).filter((p) => fs.existsSync(p));
+
+    files.push(...candidates);
+  }
+
+  return files;
 }

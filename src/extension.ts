@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { buildPreviewHtml } from "./buildPreviewHtml";
 import { bundleJsx } from "./bundleJsx";
+import { buildComponentPreview } from "./componentPreview";
 import { extractJsxBlock } from "./extractJsxBlock";
 import { generateTailwindCss } from "./generateTailwindCss";
 import { createHoverProvider } from "./hoverProvider";
@@ -23,11 +24,13 @@ export function activate(context: vscode.ExtensionContext) {
       return;
     }
 
-    // JSXブロックを抽出する
-    const jsxBlock = extractJsxBlock(document, line);
+    // コンポーネント定義内なら @preview またはデフォルトpropsでプレビュー
+    // そうでなければ従来通りJSXブロックを抽出
+    const componentPreview = buildComponentPreview(document, line);
+    const jsxBlock = componentPreview?.jsxBlock ?? extractJsxBlock(document, line);
 
     if (jsxBlock) {
-      const bundle = await bundleJsx(jsxBlock, document.uri.fsPath);
+      const bundle = await bundleJsx(jsxBlock, document.uri.fsPath, componentPreview?.componentName);
       const tailwindCss = generateTailwindCss(jsxBlock, document.uri.fsPath);
 
       if (bundle?.error) {

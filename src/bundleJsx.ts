@@ -1,7 +1,16 @@
-import * as esbuild from "esbuild";
+import * as esbuild from "esbuild-wasm";
 import * as fs from "fs";
 import * as path from "path";
 import { extractImports, findNodeModulesPaths } from "./resolveImports";
+
+let initialized = false;
+
+async function ensureInitialized() {
+  if (!initialized) {
+    await esbuild.initialize({});
+    initialized = true;
+  }
+}
 
 export interface BundleResult {
   js: string;
@@ -14,9 +23,11 @@ export interface BundleResult {
 // 1. JSXブロックをReactでレンダリングするコードに包む
 // 2. esbuildでバンドル（importの解決、JSX変換、CSS抽出）
 // 3. バンドルされたJSとCSSを返す
+// componentName: @preview等で同じファイル内のコンポーネントを使う場合、そのコンポーネント名
 export async function bundleJsx(
   jsxBlock: string,
   filePath: string,
+  componentName?: string,
 ): Promise<BundleResult | null> {
   const fileDir = path.dirname(filePath);
 
@@ -25,6 +36,8 @@ export async function bundleJsx(
     fs.mkdirSync(tmpDir, { recursive: true });
   }
 
+  await ensureInitialized();
+
   const tmpEntry = path.join(tmpDir, "entry.tsx");
 
   // 元ファイルからimport文を抽出する
@@ -32,11 +45,17 @@ export async function bundleJsx(
   const originalCode = fs.readFileSync(filePath, "utf-8");
   const imports = extractImports(originalCode, fileDir);
 
+  // コンポーネント自身を同じファイルからimportする（@preview用）
+  const componentImport = componentName
+    ? `import { ${componentName} } from "${filePath}";`
+    : "";
+
   // JSXブロックをReactでレンダリングするエントリーコードを作る
   const entryCode = `
     import React from "react";
     import { createRoot } from "react-dom/client";
     ${imports}
+    ${componentImport}
 
     const Preview = () => {
       return (

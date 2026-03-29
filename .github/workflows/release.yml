@@ -1,5 +1,9 @@
 name: Release
 
+# リリース手順:
+#   1. package.json の version を更新
+#   2. git tag v0.0.x && git push origin v0.0.x
+#   タグのpushをトリガーに6プラットフォーム分のVSIXをビルド・公開する
 on:
   push:
     tags:

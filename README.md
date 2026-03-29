@@ -24,8 +24,6 @@ The preview auto-updates every time you save the file.
 
 When previewing a component definition file (e.g., `Button.tsx`), you can use the `@preview` directive to specify how it should be rendered.
 
-### With `@preview` — specify your own props
-
 Single line:
 ```tsx
 // @preview <Button variant="danger">Delete</Button>
@@ -42,21 +40,9 @@ Multi-line:
 export const Card = ({ title, children }: CardProps) => {
 ```
 
-You only need to specify the props you care about — props with default values in the code are used as-is.
+Props with default values in the code (e.g., `variant = "primary"`) are used as-is — you only need to specify the props you want to override.
 
-### Without `@preview` — auto-generated defaults
-
-If no `@preview` is specified, default values are generated from TypeScript types:
-
-| Type | Default |
-|------|---------|
-| `string` | `"Text"` |
-| `number` | `0` |
-| `boolean` | `true` |
-| `React.ReactNode` | `<span>Content</span>` |
-| `"primary" \| "danger"` | `"primary"` (first value) |
-
-Props with default values in destructuring (e.g., `variant = "primary"`) are skipped.
+If no `@preview` is specified, the JSX block is previewed directly as before.
 
 ## Requirements
 

@@ -9,7 +9,7 @@
   "license": "MIT",
   "icon": "icon/icon.png",
   "publisher": "vscode-jsx-preview",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "engines": {
     "vscode": "^1.85.0"
   },
@@ -30,12 +30,12 @@
     ]
   },
   "scripts": {
-    "build": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --external:esbuild-wasm --format=cjs --platform=node --sourcemap",
+    "build": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --external:esbuild --format=cjs --platform=node --sourcemap",
     "watch": "npm run build -- --watch",
     "test": "vitest run --reporter=verbose"
   },
   "dependencies": {
-    "esbuild-wasm": "^0.27.4"
+    "esbuild": "^0.27.4"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.8",

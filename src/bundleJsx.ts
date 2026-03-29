@@ -1,16 +1,7 @@
-import * as esbuild from "esbuild-wasm";
+import * as esbuild from "esbuild";
 import * as fs from "fs";
 import * as path from "path";
 import { extractImports, findNodeModulesPaths } from "./resolveImports";
-
-let initialized = false;
-
-async function ensureInitialized() {
-  if (!initialized) {
-    await esbuild.initialize({});
-    initialized = true;
-  }
-}
 
 export interface BundleResult {
   js: string;
@@ -35,8 +26,6 @@ export async function bundleJsx(
   if (!fs.existsSync(tmpDir)) {
     fs.mkdirSync(tmpDir, { recursive: true });
   }
-
-  await ensureInitialized();
 
   const tmpEntry = path.join(tmpDir, "entry.tsx");
 

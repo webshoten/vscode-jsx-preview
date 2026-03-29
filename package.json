@@ -9,7 +9,7 @@
   "license": "MIT",
   "icon": "icon/icon.png",
   "publisher": "vscode-jsx-preview",
-  "version": "0.0.4",
+  "version": "0.0.6",
   "engines": {
     "vscode": "^1.85.0"
   },

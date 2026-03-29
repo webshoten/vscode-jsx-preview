@@ -5,11 +5,8 @@ export interface ComponentPreviewResult {
   componentName: string;
 }
 
-// カーソル位置がコンポーネント定義内であれば、プレビュー用のJSXを生成する
-//
-// 1. カーソル行を含むコンポーネント定義を探す
-// 2. @preview コメントがあればそれを使う
-// 3. なければ型情報からデフォルトpropsを生成する
+// カーソル位置がコンポーネント定義内で @preview コメントがあれば、そのJSXを返す
+// @preview がなければ null を返し、従来の extractJsxBlock にフォールバックする
 export function buildComponentPreview(
   document: vscode.TextDocument,
   line: number,
@@ -19,42 +16,13 @@ export function buildComponentPreview(
     return null;
   }
 
-  // @preview コメントを探す
+  // @preview コメントがあればそれを使う。なければ null（従来動作へ）
   const previewComment = findPreviewComment(document, component.startLine);
-  if (previewComment) {
-    return { jsxBlock: previewComment, componentName: component.name };
+  if (!previewComment) {
+    return null;
   }
 
-  // 型情報からデフォルトpropsを生成
-  const code = document.getText();
-  const props = extractPropTypes(code, component.name);
-  const defaults = extractDefaultValues(code, component.name);
-
-  // propsをJSX属性に変換
-  const attrs: string[] = [];
-  let childrenValue: string | null = null;
-
-  for (const [name, type] of Object.entries(props)) {
-    // デフォルト値が設定済みのpropsはスキップ
-    if (defaults.has(name)) {
-      continue;
-    }
-
-    const value = defaultValueForType(type);
-    if (name === "children") {
-      childrenValue = value;
-    } else {
-      attrs.push(formatPropAttribute(name, type, value));
-    }
-  }
-
-  const attrStr = attrs.length > 0 ? ` ${attrs.join(" ")}` : "";
-
-  const jsxBlock = childrenValue
-    ? `<${component.name}${attrStr}>${childrenValue}</${component.name}>`
-    : `<${component.name}${attrStr} />`;
-
-  return { jsxBlock, componentName: component.name };
+  return { jsxBlock: previewComment, componentName: component.name };
 }
 
 // カーソル行を含むコンポーネント定義を探す（大文字始まりの関数/const）

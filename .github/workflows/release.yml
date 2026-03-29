@@ -35,8 +35,9 @@ jobs:
         run: npm ci
 
       # 対象プラットフォームのesbuildバイナリをインストール
+      # CIはLinux上で実行されるため、他OS向けバイナリは--forceで強制インストール
       - name: Install platform-specific esbuild
-        run: npm install --no-save @esbuild/${{ matrix.npm_arch }}
+        run: npm install --no-save --force @esbuild/${{ matrix.npm_arch }}
 
       - name: Build
         run: npm run build
